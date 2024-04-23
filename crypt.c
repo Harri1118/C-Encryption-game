@@ -16,13 +16,15 @@ struct gameContents{
 struct gameContents game;
 
 // input for user to enter.
-char input[100];
+//char input[100];
 
 // userAlphabet which will record the user input.
 char userAlphabet[26];
 
 // answerSize defines the character size of the answer.
 int answerSize = 0;
+
+char* decryptedString;
 
 // start time and end time initiated to record the length of a user's game.
 clock_t start_time, end_time;
@@ -70,9 +72,11 @@ bool printPuzzleMap(int toggle){
                 	fin[i] = '_';
         }
         fin[answerSize] = '\0';
-        if(toggle == 0)
-                printf("Decrypted (Lower case letters are incorrect!):\n%s\n", fin);
-        if(size == answerSize){
+	if(toggle == 0){
+                sprintf(decryptedString, "Decrypted (Lower case letters are incorrect!):\n%s\n", fin);
+	printf("%s\n",decryptedString);
+	}
+	if(size == answerSize){
                 return true;
         }
         return false;
@@ -84,18 +88,18 @@ int initialization(){
 	shuffle(alphabet);
 	game.puzzle = encryptPuzzle(game.answer);
 	printf("%s\n", game.answer);
-	printf("Encrypted:\n%s\n", game.puzzle);
-	printPuzzleMap(0);
+	//printf("Encrypted:\n%s\n", game.puzzle);
+	//printPuzzleMap(0);
 	start_time = clock();
 	return 0;
 }
 
 // acceptInput prints a prompt and accepts a max of 5 characters from the user input.
-char* acceptInput(){
-	printf("Enter a letter and then the letter to replace it with or 'quit' to quit.\n");
-	fgets(input, 5, stdin);
-	convertToUpperCase(input);
-}
+/*char* acceptInput(char* input){
+	printf("%s\n",input);
+	convertToUppercase(input);	
+	
+}*/
 
 // validCheck checks to see if the input is appropriate that the program can use to modify the userGuess.
 // It checks to see if the length is not equal to 3 and that bpth characters are valid. If it doesn't then it prints an error message and returns false.
@@ -129,6 +133,7 @@ int getAnswerVal(char c){
 // inputProcessor iterates the alphabet to find and replace characters. If the character is null then it grabs from the encrypted alphabet. If the character is not null then it
 // will check to see if its in the correct space by calling getAnswerVal. If the iteration of the target is not equal to getAnswerVal then replace it.
 bool inputProcessor(char target, char replace){
+	printf("Target: %c, replace: %c\n", target, replace);
 	bool noExist = false;
 	int indexSaver = 0;
 	for(int i  = 0; i < 26; i++){
@@ -153,9 +158,16 @@ bool inputProcessor(char target, char replace){
         return false;
 }
 
+char* acceptInput(char* input){
+        convertToUpperCase(input);
+	printf("%s\n",input);
+        //convertToUpperCase(input);
+	inputProcessor(input[11],input[12]);
+}
+
 // updateState compares the input to 'quit' in cases where the user wants to quickly end the game (it will return true in this case). It also checks if the input is valid with "validCheck", 
 // a method delcared in "inputFormatter.c". If the script userGuess and answer are equal then return true. It returns false otherwise.
-bool updateState(){
+/*bool updateState(char* input){
 	if(strcmp(input, "QUIT") == 0)
 		return true;
 	if(validCheck(input)){
@@ -163,12 +175,18 @@ bool updateState(){
 		return true;
 	}
 	return false;
-}
+}*/
 
 // displayWord simply displays the user's current guess.
-void displayWorld(){
+char* displayWorld(){
 	printf("Encrypted:\n%s\n", game.puzzle);
+	decryptedString = malloc(600);
 	printPuzzleMap(0);
+	char* message = malloc(1500);
+	sprintf(message, "HTTP/1.1 200 OK\r\ncontent-type: text/html; charset=UTF-8 \r\n\r\n<html><body>Encrypted: %s <P> Decrypted: %s\n <form submit=\"crypt\"><input type=\"text\" name=move autofocus maxlength=2> </input></form></html>", game.puzzle, decryptedString);
+	printf("%s\n", message);
+	free(decryptedString);
+	return message;
 }
 
 // tearDown frees the allocated memmory to userGuess (because the encryptPuzzle method allocated memory to the return value), and the game ends.
@@ -184,8 +202,29 @@ int tearDown(void){
 	return 0;
 }
 
+bool isGameOver(){
+return false;
+}
+
+char* handleGame(char* input){
+	int len = strlen(input);
+	// crypt?move=
+	if(len == 5){
+		initialization();
+		return displayWorld();
+	}
+	else if(len > 5){
+		acceptInput(input);
+		if(printPuzzleMap(1) == true){
+			tearDown();
+			return "You won!";
+		}
+		return displayWorld();
+	}
+	return "Error!";
+} 
 // gameLoop iterates through acceptInput, updateState, and displayWorld. It returns 0 when the "state" variable is false.
-int gameLoop(){
+/*int gameLoop(){
 	bool state = false;
 	while(state == false){
 		acceptInput();
@@ -193,11 +232,11 @@ int gameLoop(){
 		displayWorld();
 	}
 	return 0;
-}
+}*/
 
 // main creates a loop governed by game. It will call initialization, gameLoop, and tearDown until game is false. It checks
 // for user input depending on if the user wants to end the game or not.
-int main(){
+/*int main(){
 	bool game = true;
 	while(game == true){
 		initialization();
@@ -205,22 +244,18 @@ int main(){
 		tearDown();
 		printf("Do you want to restart the game? Type \"y\" for yes and \"n\" for no.)\n");
 		bool control = false;
-		//fgets(input, 5, stdin);
-		//scanf("%s", input);
 		while(control == false){
 		scanf("%s", input);
-		if(input[0] == 'y'){
-		control = true;
-		}
+		if(input[0] == 'y')
+			control = true;
 		else if(input[0] == 'n'){
 		freeQuotes();
 		control = true;
 		game = false;
 		}
-		else{
-		printf("Invalid input! Please enter \"\" or \"\"!\n");
-		}
+		else
+			printf("Invalid input! Please enter \"\" or \"\"!\n");
 		}
 	}
 	return 0;
-}
+}*/
