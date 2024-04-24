@@ -11,13 +11,12 @@
 #include <unistd.h>
 #include "crypt.c"
 #include "findPath.c"
-#include "loadPath.c"
 
+// userHandler handles the threads created in the main method. It's used to handle any game responses. It reads from the buffer, validates the path, generates a response and frees the response and path variables.
 void *userHandler(void *arg){
     int cliSocket = *(int*)arg;
     char buffer[1500];
     ssize_t byteStore = read(cliSocket, buffer, 1500 - 1);
-    //printf("%s\n", buffer);
     if (byteStore < 0) {
         perror("read");
         close(cliSocket);
@@ -26,22 +25,21 @@ void *userHandler(void *arg){
     buffer[byteStore] = '\0';
     char* notFound = "404 Not found.";
     char *path = getPath(buffer);
-    //printf("%s\n", path);
     if(pathExists(path) == false){
     	send(cliSocket, notFound, strlen(notFound), 0);
     }
     else{
-    	char* RESPONSE = handleGame(path);
-	
-	//printf("%s",RESPONSE);
+    	char* RESPONSE = handleGame(path);	
         send(cliSocket, RESPONSE, strlen(RESPONSE), 0);
-        //free(RESPONSE);
+    	if(isEndingResponse(RESPONSE) == false)
+		free(RESPONSE);
     }
     free(path);
     close(cliSocket);
     return NULL;
 }
 
+// main creates a server, initializes and terminates quotes generated from the puzzle generator(before and after the program ends).
 int main(){
     int serverFd;
     int cliSocket;
@@ -70,5 +68,6 @@ int main(){
         pthread_create(&thread, NULL, userHandler, &cliSocket);
         pthread_detach(thread);
     }
+    freeQuotes();
     return 0;
 }
